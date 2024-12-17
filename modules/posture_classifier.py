@@ -1,5 +1,6 @@
 import cv2
 import logging
+# Posture detection module - enhanced accuracy v2.1
 
 logger = logging.getLogger(__name__)
 
