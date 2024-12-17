@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from collections import defaultdict
 import logging
+# Zone analytics module - heatmap generation and occupancy tracking
 
 logger = logging.getLogger(__name__)
 
