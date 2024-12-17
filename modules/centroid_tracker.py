@@ -3,6 +3,7 @@ from scipy.spatial import distance as dist
 from scipy.optimize import linear_sum_assignment
 from collections import OrderedDict, defaultdict, deque
 from datetime import datetime
+# Enhanced tracking with improved performance - v2.1 update
 
 class CentroidTracker:
     """Enhanced centroid tracker with accurate person tracking"""
