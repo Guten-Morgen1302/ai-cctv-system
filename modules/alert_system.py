@@ -2,6 +2,7 @@ import time
 from datetime import datetime
 from collections import deque
 import logging
+# v2.1 - Improved alert handling and cooldown management
 
 logger = logging.getLogger(__name__)
 
