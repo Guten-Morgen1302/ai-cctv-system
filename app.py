@@ -2,6 +2,7 @@
 SecureVista Surveillance System - FIXED VERSION
 Complete implementation with accurate person detection, tracking, pose estimation, 
 zone analytics, and real-time alerts system
+v2.1 - Enhanced stability and performance
 """
 
 import cv2
