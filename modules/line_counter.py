@@ -1,5 +1,6 @@
 import math
 from collections import defaultdict
+# Enhanced line crossing detection with multi-method accuracy
 
 class LineCounter:
     """Enhanced line crossing counter for entry/exit tracking"""
