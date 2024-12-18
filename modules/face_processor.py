@@ -1,5 +1,6 @@
 import cv2
 import logging
+# Privacy-focused face detection and blurring
 
 logger = logging.getLogger(__name__)
 
