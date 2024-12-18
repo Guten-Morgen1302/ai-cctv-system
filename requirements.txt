@@ -10,3 +10,4 @@ torch==2.0.1
 torchvision==0.15.2
 gunicorn==21.2.0
 opencv-python-headless==4.8.0.76
+# Updated for v2.1 stability
