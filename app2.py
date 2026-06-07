@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import os
 import numpy as np
 from dotenv import load_dotenv
+# v2.2 - Enhanced surveillance dashboard and analytics
 
 # Load environment variables early
 load_dotenv()
