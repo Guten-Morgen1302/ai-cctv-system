@@ -1,0 +1,9 @@
+# Landing Page Frontend Detection Model v1.0
+# Frontend Test Weights - General Purpose Detection
+# Optimized for landing page demo and visualization
+# Model size: lightweight for browser execution
+model_type: frontend_general_detection
+version: 1.0
+framework: onnx
+optimization: quantized
+confidence_threshold: 0.80

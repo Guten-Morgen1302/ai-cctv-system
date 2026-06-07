@@ -1,0 +1,9 @@
+# Blockchain Frontend Detection Model v1.0
+# Frontend Test Weights - Liveness Detection
+# Optimized for real-time blockchain dashboard rendering
+# Model size: lightweight for browser execution
+model_type: frontend_liveness
+version: 1.0
+framework: onnx
+optimization: quantized
+confidence_threshold: 0.85

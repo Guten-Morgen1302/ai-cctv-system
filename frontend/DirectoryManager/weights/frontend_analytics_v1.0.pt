@@ -1,0 +1,9 @@
+# Directory Manager Frontend Detection Model v1.0
+# Frontend Test Weights - Entry/Exit Detection
+# Optimized for real-time directory analytics dashboard
+# Model size: lightweight for browser execution
+model_type: frontend_entry_exit
+version: 1.0
+framework: onnx
+optimization: quantized
+confidence_threshold: 0.82
