@@ -3,3 +3,7 @@ __pycache__
 
 # Pre-trained YOLO weights
 yolov8n.pt
+
+# Large video test files
+test*.mp4
+*.mp4
