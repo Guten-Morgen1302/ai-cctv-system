@@ -1,5 +1,5 @@
 FROM python:3.10-slim
-
+# SecureVista Docker image - v2.2 optimized
 WORKDIR /app
 
 # Install system dependencies
