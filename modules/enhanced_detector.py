@@ -7,6 +7,7 @@ import threading
 import time
 from datetime import datetime
 import logging
+# Enhanced detector with improved performance - v2.2 update
 
 from .centroid_tracker import CentroidTracker
 from .line_counter import LineCounter
