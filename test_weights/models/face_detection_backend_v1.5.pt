@@ -1,0 +1,8 @@
+# Backend Test Weight - Face Detection v1.5
+# RetinaFace optimized for privacy-focused detection
+# Server-side model for high accuracy
+model_type: face_detection_backend
+version: 1.5
+optimization: standard
+confidence: 0.90
+framework: pytorch

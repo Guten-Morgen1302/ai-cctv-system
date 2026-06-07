@@ -1,0 +1,8 @@
+# Frontend Test Weight - Pose Estimation v1.0
+# MediaPipe optimized for browser execution
+# Model: Lightweight pose detection
+model_type: pose_estimation_frontend
+version: 1.0
+optimization: quantized
+confidence: 0.82
+framework: tflite

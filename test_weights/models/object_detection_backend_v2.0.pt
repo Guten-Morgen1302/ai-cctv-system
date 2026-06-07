@@ -1,0 +1,8 @@
+# Backend Test Weight - Object Detection v2.0
+# YOLOv8 Medium model for full detection capabilities
+# Optimized for server-side processing
+model_type: object_detection_backend
+version: 2.0
+optimization: standard
+confidence: 0.88
+framework: pytorch
