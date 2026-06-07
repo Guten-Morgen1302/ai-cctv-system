@@ -1,6 +1,7 @@
 """
 Blockchain-Based Identity & Evidence Integrity System
 Combines blockchain evidence chain with risk scoring and identity registry
+v2.2 - Improved scoring algorithm and performance
 """
 
 import hashlib
