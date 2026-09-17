@@ -1,0 +1,8 @@
+# Frontend Test Weight - Person Detection v1.0
+# Optimized for real-time browser-based detection
+# Model: YOLOv8 Nano quantized
+model_type: person_detection_frontend
+version: 1.0
+optimization: quantized
+confidence: 0.85
+framework: onnx

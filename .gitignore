@@ -28,9 +28,11 @@ yolov8n.pt
 # ---- Runtime artifacts ----
 *.db
 *.sqlite3
-logs/
+**/logs/*
+!logs/.gitkeep
 *.log
 output.txt
+PyWhatKit_DB.txt
 app_output.txt
 error.txt
 
