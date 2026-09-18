@@ -1,0 +1,12 @@
+# Development and test dependencies.
+# Runtime deps live in requirements.txt.
+#
+#     pip install -r requirements-dev.txt
+#
+# Run the suites with:
+#     pytest test_weights/
+#     python tests/test_frontend_weights.py
+
+-r requirements.txt
+
+pytest>=8.0.0
