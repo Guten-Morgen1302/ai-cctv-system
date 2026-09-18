@@ -75,6 +75,7 @@ export const BlockchainFeed: React.FC<BlockchainFeedProps> = ({ events, position
                 </div>
               </div>
             );
+            }
             return (
               <div key={`block-${idx}`} className={`border p-2 rounded-md space-y-1 relative overflow-hidden group ${
                 item.data.event_type === 'FRAUD_RING_DETECTED' ? 'bg-orange-500/10 border-orange-500/30' : 'bg-hacker-red/5 border-hacker-red/20'
