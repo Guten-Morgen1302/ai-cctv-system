@@ -15,6 +15,7 @@ from .posture_classifier import PostureClassifier
 from .face_processor import FaceProcessor
 from .zone_analyzer import ZoneAnalyzer
 from .alert_system import AlertSystem
+from .fire_smoke_detector import FireSmokeDetector
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ class Enhanced2A2SDetector:
         self.posture_classifier = PostureClassifier()
         self.face_processor = FaceProcessor()
         self.alert_system = AlertSystem()
+        self.fire_smoke_detector = FireSmokeDetector()
         
         # Threading
         self.running = False
@@ -55,6 +57,7 @@ class Enhanced2A2SDetector:
         self.show_poses = True
         self.show_zones = False
         self.show_line_counter = True
+        self.detect_hazards = True
         
         # Statistics (JSON serializable)
         self.stats = {
@@ -63,7 +66,9 @@ class Enhanced2A2SDetector:
             'entry_count': 0,
             'exit_count': 0,
             'crowd_alerts': 0,
-            'inactivity_alerts': 0
+            'inactivity_alerts': 0,
+            'fire_alerts': 0,
+            'smoke_alerts': 0
         }
         
         # Initialize
@@ -263,7 +268,24 @@ class Enhanced2A2SDetector:
             if self.alert_system.trigger_crowd_alert(len(objects_info), timestamp):
                 self.stats['crowd_alerts'] += 1
         
-        # 9. Add comprehensive information overlay
+        # 9. Fire and smoke detection
+        if self.detect_hazards:
+            for hazard in self.fire_smoke_detector.detect(frame):
+                x1, y1, x2, y2 = hazard['bbox']
+                colour = (0, 0, 255) if hazard['type'] == 'fire' else (128, 128, 128)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), colour, 3)
+                cv2.putText(
+                    frame,
+                    f"{hazard['type'].upper()} {hazard['confidence']:.0%}",
+                    (x1, max(20, y1 - 10)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, colour, 2,
+                )
+                if self.alert_system.trigger_hazard_alert(
+                    hazard['type'], hazard['confidence'], timestamp
+                ):
+                    self.stats[f"{hazard['type']}_alerts"] += 1
+
+        # 10. Add comprehensive information overlay
         self.add_info_overlay(frame, timestamp)
         
         return frame

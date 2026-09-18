@@ -50,6 +50,28 @@ class AlertSystem:
             return True
         return False
     
+    def trigger_hazard_alert(self, hazard_type, confidence, timestamp):
+        """
+        Trigger a fire or smoke alert.
+
+        Uses a longer cooldown than the people alerts: a fire stays in frame
+        for minutes, and re-alerting every 10 seconds would bury everything
+        else in the log.
+        """
+        key = f'hazard_{hazard_type}'
+        previous = self.cooldown_duration
+        self.cooldown_duration = 60
+        try:
+            allowed = self.should_send_alert(key)
+        finally:
+            self.cooldown_duration = previous
+
+        if allowed:
+            message = f"{hazard_type.capitalize()} detected ({confidence:.0%} confidence)"
+            self.log_alert(hazard_type, message)
+            return True
+        return False
+
     def get_recent_alerts(self, limit=10):
         """Get recent alerts for display"""
         return list(self.alert_logs)[-limit:]
