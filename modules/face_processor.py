@@ -9,10 +9,16 @@ class FaceProcessor:
     
     def __init__(self):
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        if self.face_cascade.empty():
+            logger.warning("Face cascade unavailable; face detection is disabled")
+            self.face_cascade = None
         
     def process_faces(self, image, blur_faces=True):
         """Process faces in image - blur for privacy"""
         try:
+            if self.face_cascade is None:
+                return image, []
+
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             faces = self.face_cascade.detectMultiScale(gray, 1.3, 5, minSize=(30, 30))
             

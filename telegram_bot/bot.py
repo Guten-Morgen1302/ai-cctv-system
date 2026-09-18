@@ -13,6 +13,7 @@ import sys
 import os
 
 from telegram import Update, BotCommand
+from telegram.error import InvalidToken
 from telegram.request import HTTPXRequest
 from telegram.ext import (
     Application,
@@ -256,8 +257,14 @@ def main() -> None:
 
     app.post_init = post_init
 
-    logger.info("✅ Bot is live and polling for commands.")
-    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+    try:
+        app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+    except InvalidToken:
+        logger.critical(
+            "Telegram rejected TELEGRAM_BOT_TOKEN. Revoke the exposed token in "
+            "@BotFather, create a new token, update telegram_bot/.env, and retry."
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":

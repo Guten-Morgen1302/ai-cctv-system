@@ -26,6 +26,7 @@ WEBHOOK_BASE_URL = os.getenv("WEBHOOK_BASE_URL", "http://localhost:5003")
 
 # Twilio client (initialized on first use)
 _twilio_client = None
+_voice_sentinel_warning_logged = False
 
 # Call cooldown tracking (prevent spam calls to same number)
 _last_call_time = {}  # {phone_number: timestamp}
@@ -107,6 +108,8 @@ def get_voice_alert(event: Dict[str, Any]) -> Optional[Dict[str, str]]:
     Returns:
         Dict with 'spoken_message' and 'dtmf_menu' or None on error
     """
+    global _voice_sentinel_warning_logged
+
     try:
         response = requests.post(
             f"{VOICE_SENTINEL_URL}",
@@ -115,11 +118,31 @@ def get_voice_alert(event: Dict[str, Any]) -> Optional[Dict[str, str]]:
         )
         if response.status_code == 200:
             return response.json()
-        else:
-            logger.error(f"Voice Sentinel error: {response.status_code}")
-            return None
+        if not _voice_sentinel_warning_logged:
+            logger.warning(
+                "Voice Sentinel API returned %s; using local voice alert generation",
+                response.status_code,
+            )
+            _voice_sentinel_warning_logged = True
+    except requests.RequestException as e:
+        if not _voice_sentinel_warning_logged:
+            logger.warning(
+                "Voice Sentinel API unavailable (%s); using local voice alert generation",
+                e,
+            )
+            _voice_sentinel_warning_logged = True
+
+    # Keep voice escalation functional when the optional port-5003 service is down.
+    try:
+        from modules.voice_sentinel import VoiceSentinel
+
+        spoken_message, dtmf_menu = VoiceSentinel().process_event(event)
+        return {
+            "spoken_message": spoken_message,
+            "dtmf_menu": dtmf_menu,
+        }
     except Exception as e:
-        logger.error(f"Failed to get voice alert: {str(e)}")
+        logger.error(f"Local voice alert generation failed: {e}")
         return None
 
 
@@ -217,6 +240,7 @@ def trigger_voice_call(event: Dict[str, Any], to_number: str) -> Optional[str]:
 def schedule_voice_call_in_15_seconds(
     event: Dict[str, Any],
     to_number: str,
+    delay_seconds: int = 15,
 ) -> None:
     """
     Schedule a voice call to be triggered after 15 seconds.
@@ -240,7 +264,7 @@ def schedule_voice_call_in_15_seconds(
 
     def _delayed():
         try:
-            time.sleep(15)
+            time.sleep(max(0, delay_seconds))
             trigger_voice_call(event, to_number)
         finally:
             _pending_calls.discard(to_number)
