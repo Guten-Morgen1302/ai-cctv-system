@@ -301,29 +301,17 @@ class Detector_2A2S:
                 print(f"\n🚨 [WHATSAPP: {alert_type.upper()}]")
                 print(f"📱 To: {self.whatsapp_number}")
                 print(f"📝 {message[:80]}...")
+
+                # Queue the phone call first so it lands about five seconds
+                # after WhatsApp, even if browser automation takes longer.
+                self._schedule_voice_alert(alert_type)
                 
                 # Try immediate sending with pywhatkit
                 try:
-                    # Get current time for scheduling (1 minute from now)
-                    now = datetime.now()
-                    hour = now.hour
-                    minute = now.minute + 1
-                    
-                    # Handle minute overflow
-                    if minute >= 60:
-                        minute = 0
-                        hour += 1
-                        if hour >= 24:
-                            hour = 0
-                    
-                    print(f"[📤 Scheduling for {hour:02d}:{minute:02d}]")
-                    
-                    # Send WhatsApp message
-                    pwk.sendwhatmsg(
+                    print("[📤 Sending WhatsApp immediately]")
+                    pwk.sendwhatmsg_instantly(
                         phone_no=self.whatsapp_number,
                         message=message,
-                        time_hour=hour,
-                        time_min=minute,
                         wait_time=10,
                         tab_close=False,  # Keep browser open
                         close_time=1
@@ -357,7 +345,8 @@ class Detector_2A2S:
             with self.whatsapp_lock:
                 self.pending_whatsapp_alerts.discard(alert_type)
 
-        # After scheduling WhatsApp, also schedule a voice call for certain alert types
+    def _schedule_voice_alert(self, alert_type):
+        """Queue one voice call shortly after the immediate WhatsApp alert."""
         try:
             from modules.voice_call_handler import schedule_voice_call_in_15_seconds, GUARD_PHONE
 
@@ -377,8 +366,8 @@ class Detector_2A2S:
                     'short_reason': f'{mapping[alert_type].replace("_", " ")} detected via WhatsApp trigger',
                 }
                 guard_phone = os.getenv('GUARD_PHONE', GUARD_PHONE)
-                print(f"📞 [VOICE] Scheduling voice call for {voice_event['event_type']} to {guard_phone} in 15 seconds...")
-                schedule_voice_call_in_15_seconds(voice_event, guard_phone)
+                print(f"📞 [VOICE] Scheduling voice call for {voice_event['event_type']} to {guard_phone} in 5 seconds...")
+                schedule_voice_call_in_15_seconds(voice_event, guard_phone, delay_seconds=5)
         except Exception:
             # Non-fatal: if voice handler isn't available or scheduling fails, continue
             pass
@@ -555,26 +544,6 @@ Data: {str(alert_data)[:100]}...
                     print(f"🌒 [SHADOW DETECTED] Sending WhatsApp alert immediately...")
                     self.send_whatsapp_alert('shadow_detection', shadow_event)
                     
-                    # VOICE CALLING: Schedule voice call for shadow detection
-                    if VOICE_CALLING_AVAILABLE and self.isSendingAlerts:
-                        try:
-                            # Create voice event from shadow data
-                            import os
-                            guard_phone = os.getenv('GUARD_PHONE', '+91XXXXXXXXXX')
-                            
-                            voice_event = {
-                                'incident_id': f"SHADOW-{int(datetime.now().timestamp())}",
-                                'event_type': 'SHADOW_DETECTED',
-                                'risk_tier': 'HIGH',  # Shadow detection is HIGH priority
-                                'zone_name': 'Security Camera System',
-                                'short_reason': f'Suspicious shadow movement detected - {shadow_pixels} pixels affected',
-                                'recommended_actions': ['Monitor area closely', 'Check for unauthorized movement']
-                            }
-                            
-                            print(f"📞 [SHADOW] Scheduling voice call in 15 seconds...")
-                            schedule_voice_call_in_15_seconds(voice_event, guard_phone)
-                        except Exception as voice_error:
-                            print(f"⚠️ [VOICE ERROR] {str(voice_error)[:60]}")
             return shadow_mask.astype(np.uint8) * 255, light_change_detected
             
         except Exception as e:

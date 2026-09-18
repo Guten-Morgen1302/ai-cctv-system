@@ -7,10 +7,6 @@ v2.1 - Enhanced stability and performance
 
 import cv2
 import numpy as np
-import mediapipe as mp
-from ultralytics import YOLO
-import supervision as sv
-from scipy.spatial import distance as dist
 from collections import OrderedDict, defaultdict, deque
 import threading
 import time
@@ -24,9 +20,7 @@ load_dotenv()
 
 from flask import Flask, Response, jsonify, request, render_template_string
 from flask_cors import CORS
-import torch
 import logging
-from modules.enhanced_detector import Enhanced2A2SDetector
 from modules.blockchain_api import blockchain_bp
 from modules.video_manager_api import video_bp
 from modules.voice_sentinel_api import voice_sentinel_bp
@@ -54,9 +48,10 @@ initialize_demo_data()
 cap = None
 detector = None
 camera_initialized = False
+camera_init_lock = threading.Lock()
 
 # ⚙️ CONFIGURATION: Choose which video file to use
-VIDEO_FILE = "test6.mp4"  # ← CHANGE THIS TO SWITCH BETWEEN TEST FILES
+VIDEO_FILE = "test5.mp4"  # ← CHANGE THIS TO SWITCH BETWEEN TEST FILES
 ALLOW_WEBCAM_FALLBACK = False
 
 
@@ -101,56 +96,63 @@ def initialize_camera():
     global cap, detector, camera_initialized
     
     if not camera_initialized:
-        try:
-            video_file = _resolve_video_file()
-
-            # Prefer configured/local test file; webcam fallback is optional.
-            sources = []
-            if video_file:
-                sources.append(video_file)
-            else:
-                logger.warning(f"No local video file found for VIDEO_FILE={VIDEO_FILE}")
-
-            if ALLOW_WEBCAM_FALLBACK:
-                sources.extend([0, 1, 2, 3])
-
-            if not sources:
-                logger.error("No video source available. Add a test .mp4 or enable ALLOW_WEBCAM_FALLBACK.")
+        with camera_init_lock:
+            if camera_initialized:
                 return
 
-            cap = None
-            selected_source = None
-            for source in sources:
-                candidate = cv2.VideoCapture(source)
-                if candidate.isOpened():
-                    cap = candidate
-                    selected_source = source
-                    break
-                candidate.release()
-            
-            if cap and cap.isOpened():
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-                cap.set(cv2.CAP_PROP_FPS, 30)
-                
-                detector = Enhanced2A2SDetector(cap)
-                
-                # ✅ Enable loitering detection ONLY for test5.mp4
-                if isinstance(selected_source, str) and "test5" in os.path.basename(selected_source).lower():
-                    detector.loitering_detection_enabled = True
-                    logger.info("✅ Loitering detection ENABLED (test5.mp4 detected)")
+            try:
+                # Load the ML stack only when a video stream is first requested.
+                from modules.enhanced_detector import Enhanced2A2SDetector
+
+                video_file = _resolve_video_file()
+
+                # Prefer configured/local test file; webcam fallback is optional.
+                sources = []
+                if video_file:
+                    sources.append(video_file)
                 else:
-                    detector.loitering_detection_enabled = False
-                    logger.info(f"❌ Loitering detection DISABLED (using {selected_source})")
-                
-                detector.start_detection()
-                camera_initialized = True
-                logger.info(f"SecureVista Camera initialized successfully with source: {selected_source}")
-            else:
-                logger.error("Failed to open any camera/video source")
-                
-        except Exception as e:
-            logger.error(f"Error initializing camera: {e}")
+                    logger.warning(f"No local video file found for VIDEO_FILE={VIDEO_FILE}")
+
+                if ALLOW_WEBCAM_FALLBACK:
+                    sources.extend([0, 1, 2, 3])
+
+                if not sources:
+                    logger.error("No video source available. Add a test .mp4 or enable ALLOW_WEBCAM_FALLBACK.")
+                    return
+
+                cap = None
+                selected_source = None
+                for source in sources:
+                    candidate = cv2.VideoCapture(source)
+                    if candidate.isOpened():
+                        cap = candidate
+                        selected_source = source
+                        break
+                    candidate.release()
+
+                if cap and cap.isOpened():
+                    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+                    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+                    cap.set(cv2.CAP_PROP_FPS, 30)
+
+                    detector = Enhanced2A2SDetector(cap)
+
+                    # Enable loitering detection only for test5.mp4.
+                    if isinstance(selected_source, str) and "test5" in os.path.basename(selected_source).lower():
+                        detector.loitering_detection_enabled = True
+                        logger.info("Loitering detection enabled (test5.mp4 detected)")
+                    else:
+                        detector.loitering_detection_enabled = False
+                        logger.info(f"Loitering detection disabled (using {selected_source})")
+
+                    detector.start_detection()
+                    camera_initialized = True
+                    logger.info(f"SecureVista Camera initialized successfully with source: {selected_source}")
+                else:
+                    logger.error("Failed to open any camera/video source")
+
+            except Exception as e:
+                logger.error(f"Error initializing camera: {e}")
 
 @app.route('/')
 def index():
@@ -1013,6 +1015,11 @@ def index():
 
 @app.route('/video_feed')
 def video_feed():
+    # The image element can request the stream before the page load handler
+    # posts to /start_camera. Initialize here as a reliable fallback.
+    if not camera_initialized:
+        initialize_camera()
+
     def generate_frames():
         global detector
         frame_counter = 0

@@ -38,7 +38,15 @@ def initialize_camera():
     if not camera_initialized:
         try:
             # Try a few capture backends and indices to avoid backend-specific grab failures on Windows
-            backends = [cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_VFW]
+            backends = [
+                backend
+                for backend in (
+                    getattr(cv2, "CAP_DSHOW", None),
+                    getattr(cv2, "CAP_MSMF", None),
+                    getattr(cv2, "CAP_VFW", None),
+                )
+                if backend is not None
+            ]
             opened = False
             for backend in backends:
                 for i in range(0, 4):
@@ -150,6 +158,10 @@ def video_feed():
                 continue
     
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/favicon.ico')
+def favicon():
+    return ('', 204)
 
 def create_error_frame(message):
     """Create an error frame with message"""
@@ -2239,4 +2251,4 @@ if __name__ == '__main__':
     print("📋 System Logs: http://localhost:8080/logs")
     print("💾 Health Check: http://localhost:8080/system_health")
     
-    app.run(debug=True, host='0.0.0.0', port=8080, threaded=True)
+    app.run(debug=False, host='0.0.0.0', port=8080, threaded=True, use_reloader=False)
